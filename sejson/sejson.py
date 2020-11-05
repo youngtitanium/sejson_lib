@@ -3,6 +3,28 @@ import os
 from random import randint
 import logging
 
+class Tree:
+    keys = None
+    def __dir__(self):
+        return ['keys']
+
+
+
+def validate_chars(chars, text):
+    for char in chars:
+        text = text.replace(char, '_')
+    return text
+
+def del_frontint(text):
+    if text[0] in [i for i in range(10)]:
+        text = '_'+text[0]
+    return text
+
+def transform(text):
+    text = validate_chars('[],./\\\'"!@#$%^&*()?><:}{|`~ ', str(text))
+    text = del_frontint(text)
+    return text
+
 class sejson:
     """
     Этот класс позволяет легко редактировать json файлы.
@@ -30,7 +52,8 @@ class sejson:
                     file.write('{}')
                 logging.info('Перезапись файла')
             else:
-                filename = path+filename
+                if path != '':
+                    filename = path+'/'+filename
                 with open(filename) as file:
                     content = file.read()
                 try:
@@ -55,6 +78,24 @@ class sejson:
                 file.write('{\n}')
             logging.info('Файл создан.')
         self.filename = filename
+
+    @property
+    def tree(self):
+        content = self.content
+        tree = Tree()
+        if isinstance(content, list):
+            setattr(tree, 'list', content)
+        elif isinstance(content, dict):
+            tree = self.dict_to_tree(content)
+        else:
+            return None
+        self.__tree = tree
+        return tree
+
+    def update_by_tree(self, tree: Tree):
+        if isinstance(tree, Tree):
+            dct = self.tree_to_dict(tree)
+            return self.updatemany(dct)
 
     @property
     def content(self):
@@ -189,7 +230,7 @@ class sejson:
         else:
             return None
     @staticmethod
-    def dict_to_json(raw_dict: dict):
+    def dict_to_json(raw_dict: 'dict'):
         """
         Превращает python-словарь в json-строку.
         """
@@ -198,7 +239,7 @@ class sejson:
         return dumps(raw_dict, ensure_ascii=False, indent=4)
 
     @staticmethod
-    def json_to_dict(raw_json: str):
+    def json_to_dict(raw_json: 'str'):
         """
         Превращает json-строку в python-словарь.
         """
@@ -206,3 +247,39 @@ class sejson:
             raise TypeError('Значение raw_json должно быть строкой!')
 
         return loads(raw_json)
+    @staticmethod
+    def dict_to_tree(raw_dict: ['dict', 'str', None]):
+        raw_class = Tree()
+        for k, v in raw_dict.items():
+            k = transform(k)
+            if isinstance(v, dict):
+                rc = raw_class
+                keys = raw_class.keys
+                if keys is None:
+                    keys = []
+                keys.append(k)
+                setattr(raw_class, 'keys', keys)
+                setattr(raw_class, k, sejson.dict_to_tree(v))
+            else:
+                keys = raw_class.keys
+                if keys is None:
+                        keys = []
+                keys.append(k)
+                setattr(raw_class, 'keys', keys)
+                setattr(raw_class, k, v)
+        
+        return raw_class
+    @staticmethod
+    def tree_to_dict(tree, data=None, nane=False):
+        if data is None:
+            data = {}
+        for key in tree.keys:
+            value = getattr(tree, key)
+            if isinstance(value, Tree):
+                data[key] = sejson.tree_to_dict(value, None, True)
+                if nane:
+                    data = {key: sejson.tree_to_dict(value, None, True)}
+            else:
+                data[key]=value
+        return data
+
