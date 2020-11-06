@@ -1,8 +1,13 @@
-\>\>\>from sejson import sejson
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-\>\>\>file = sejson('SomeJSON.json')
+# sejson
 
-\>\>\>file.update(
+```python
+>>>from sejson import sejson
+
+>>>file = sejson('SomeJSON.json')
+
+>>>file.update(
 	"settings",
 	{
 		"delay":10,
@@ -16,9 +21,9 @@
 
 True
 
-\>\>\>beauty = file.beauty(False)
+>>>beauty = file.beauty(False)
 
-\>\>\>print(beauty)
+>>>print(beauty)
 
 {
 
@@ -40,13 +45,13 @@ True
 	
 }
 
-\>\>\>file0 = sejson('SomeJSON.json')
+>>>file0 = sejson('AnotherJSON.json')
 
-\>\>\>file0.append('destruct')
+>>>file0.append('destruct')
 
 True
 
-\>\>\>print(file0.beauty(False))
+>>>print(file0.beauty(False))
 
 [
 
